@@ -32,6 +32,9 @@ from labelme.widgets import ToolBar
 from labelme.widgets import UniqueLabelQListWidget
 from labelme.widgets import ZoomWidget
 
+from mmocr.utils.ocr import MMOCR
+
+ocr_detection = MMOCR(det='DB_r50', recog=None, det_config="/home/gsoykan20/Desktop/self_development/mmocr/configs/textdet/dbnet/dbnet_r50dcnv2_fpnc_1200e_icdar2015.py")
 # FIXME
 # - [medium] Set max zoom value to something big enough for FitWidth/Window
 
@@ -270,6 +273,15 @@ class MainWindow(QtWidgets.QMainWindow):
             "delete",
             self.tr("Delete current label file"),
             enabled=False,
+        )
+
+        detectText = action(
+            self.tr("&Detect Text"),
+            self.detectText,
+            None,
+            "detect_text",
+            self.tr("Run text detection model"),
+            enabled=True,
         )
 
         changeOutputDir = action(
@@ -584,6 +596,7 @@ class MainWindow(QtWidgets.QMainWindow):
             open=open_,
             close=close,
             deleteFile=deleteFile,
+            detectText=detectText,
             toggleKeepPrevMode=toggle_keep_prev_mode,
             delete=delete,
             edit=edit,
@@ -684,6 +697,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 saveWithImageData,
                 close,
                 deleteFile,
+                detectText,
                 None,
                 quit,
             ),
@@ -735,6 +749,7 @@ class MainWindow(QtWidgets.QMainWindow):
             openPrevImg,
             save,
             deleteFile,
+            detectText,
             None,
             createMode,
             editMode,
@@ -1884,6 +1899,28 @@ class MainWindow(QtWidgets.QMainWindow):
             item.setCheckState(Qt.Unchecked)
 
             self.resetState()
+
+    def detectText(self):
+        if not self.filename:
+            pass
+        detection_results = ocr_detection.readtext(self.filename,
+                               print_result=True,
+                               imshow=False,
+                               details=True,
+                               merge=False,
+                               merge_xdist=100,
+                               batch_mode=True)
+        # TODO: @gsoykan create shapes (polygon) out of detection_results
+        logger.info("Tapped on detect text")
+        shape = Shape(
+            label="text",
+            shape_type="rectangle",
+            group_id=None,
+        )
+        shape.addPoint(QtCore.QPointF(17, 20))
+        shape.addPoint(QtCore.QPointF(90, 35))
+        shape.close()
+        self.loadShapes([shape])
 
     # Message Dialogs. #
     def hasLabels(self):
