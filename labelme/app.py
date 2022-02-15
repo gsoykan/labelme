@@ -1242,7 +1242,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         for key in keys:
                             default_flags[key] = False
             shape.flags = default_flags
-            shape.flags.update(flags)
+            shape.flags.update(flags if flags is not None else default_flags)
             shape.other_data = other_data
 
             s.append(shape)
@@ -1910,17 +1910,24 @@ class MainWindow(QtWidgets.QMainWindow):
                                merge=False,
                                merge_xdist=100,
                                batch_mode=True)
-        # TODO: @gsoykan create shapes (polygon) out of detection_results
-        logger.info("Tapped on detect text")
-        shape = Shape(
-            label="text",
-            shape_type="rectangle",
-            group_id=None,
-        )
-        shape.addPoint(QtCore.QPointF(17, 20))
-        shape.addPoint(QtCore.QPointF(90, 35))
-        shape.close()
-        self.loadShapes([shape])
+        if not len(detection_results) > 0:
+            pass
+        shapes = []
+        for res in detection_results[0]['boundary_result']:
+            if not res[8] > 0.5:
+                continue
+            shape = Shape(
+                label="text",
+                shape_type="polygon",
+                group_id=None,
+            )
+            shape.addPoint(QtCore.QPointF(res[0], res[1]))
+            shape.addPoint(QtCore.QPointF(res[2], res[3]))
+            shape.addPoint(QtCore.QPointF(res[4], res[5]))
+            shape.addPoint(QtCore.QPointF(res[6], res[7]))
+            shape.close()
+            shapes.append(shape)
+        self.loadShapes(shapes)
 
     # Message Dialogs. #
     def hasLabels(self):
@@ -2013,7 +2020,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self.mayContinue():
             return
 
-        defaultOpenDirPath = dirpath if dirpath else "."
+        defaultOpenDirPath = dirpath if dirpath else "/home/gsoykan20/Desktop/datasets/comics_speech_bubble_dataset/raw_images"
         if self.lastOpenDir and osp.exists(self.lastOpenDir):
             defaultOpenDirPath = self.lastOpenDir
         else:
