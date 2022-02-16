@@ -9,3 +9,7 @@
 
 .DS_Store
 .idea/
+
+scripts/test_dataset.json
+
+scripts/train_dataset.json
