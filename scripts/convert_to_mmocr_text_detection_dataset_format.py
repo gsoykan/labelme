@@ -1,5 +1,6 @@
 import json
 import os
+import glob
 import random
 from math import floor
 
@@ -10,6 +11,12 @@ import shutil
 
 img_folder = "/home/gsoykan20/Desktop/datasets/comics_speech_bubble_dataset/raw_images"
 raw_annotations_path = "/home/gsoykan20/Desktop/datasets/comics_speech_bubble_dataset/raw_images"
+
+
+def delete_contents_of_folder(folder_path):
+    files = glob.glob(f'{folder_path}/*')
+    for f in files:
+        os.remove(f)
 
 
 def search_files(extension='.ttf', folder='H:\\'):
@@ -106,19 +113,29 @@ if __name__ == '__main__':
     json_files = search_files(".json", raw_annotations_path)
     random.seed(10)
     random.shuffle(json_files)
-    train_json = json_files[:41]
-    test_json = json_files[41:]
+    train_json = json_files[:-10]
+    test_json = json_files[-10:]
+    delete_contents_of_folder(
+        "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/test/imgs/test")
+    delete_contents_of_folder(
+        "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/train/imgs/train")
     for t in test_json:
         head, tail = os.path.split(t)
         img_path = os.path.join(img_folder, tail.split(".")[0] + ".jpg")
-        shutil.copy2(img_path, "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/test/imgs/test")
+        shutil.copy2(img_path,
+                     "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/test/imgs/test")
     for t in train_json:
         head, tail = os.path.split(t)
         img_path = os.path.join(img_folder, tail.split(".")[0] + ".jpg")
-        shutil.copy2(img_path, "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/train/imgs/train")
+        shutil.copy2(img_path,
+                     "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/train/imgs/train")
     train_json = create_instances_json(train_json, True)
     test_json = create_instances_json(test_json, False)
     with open('train_dataset.json', 'w') as outfile:
         json.dump(train_json, outfile)
     with open('test_dataset.json', 'w') as outfile:
         json.dump(test_json, outfile)
+    shutil.copy2('test_dataset.json',
+                 "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/test/instances_test.json")
+    shutil.copy2('train_dataset.json',
+                 "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/train/instances_train.json")

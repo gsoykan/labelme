@@ -34,7 +34,18 @@ from labelme.widgets import ZoomWidget
 
 from mmocr.utils.ocr import MMOCR
 
-ocr_detection = MMOCR(det='DB_r50', recog=None, det_config="/home/gsoykan20/Desktop/self_development/mmocr/configs/textdet/dbnet/dbnet_r50dcnv2_fpnc_1200e_icdar2015.py")
+use_text_recognition = True
+if use_text_recognition:
+    ocr_recognition = MMOCR(det='DB_r50',
+                            recog_config='/home/gsoykan20/Desktop/self_development/mmocr/configs/textrecog/nrtr/nrtr_r31_1by8_1by4_academic.py',
+                            recog='NRTR_1/8-1/4',
+                            det_config="/home/gsoykan20/Desktop/self_development/mmocr/configs/textdet/dbnet/dbnet_r50dcnv2_fpnc_1200e_icdar2015.py",
+                            det_ckpt="/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/dbnet_r50dcnv2_fpnc_1200e_icdar2015_custom_90train_10test/best_0_hmean-iou:hmean_epoch_5.pth")
+else:
+    ocr_detection = MMOCR(det='DB_r50',
+                          det_ckpt='/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/dbnet_r50dcnv2_fpnc_1200e_icdar2015_custom_90train_10test/best_0_hmean-iou:hmean_epoch_5.pth',
+                          recog=None,
+                          det_config="/home/gsoykan20/Desktop/self_development/mmocr/configs/textdet/dbnet/dbnet_r50dcnv2_fpnc_1200e_icdar2015.py")
 # FIXME
 # - [medium] Set max zoom value to something big enough for FitWidth/Window
 
@@ -281,6 +292,15 @@ class MainWindow(QtWidgets.QMainWindow):
             None,
             "detect_text",
             self.tr("Run text detection model"),
+            enabled=True,
+        )
+
+        detectAndRecognizeText = action(
+            self.tr("&Detect & Recognize Text"),
+            self.detectAndRecognizeText,
+            None,
+            "detect_and_recognize_text",
+            self.tr("Run text detection & recognition model"),
             enabled=True,
         )
 
@@ -597,6 +617,7 @@ class MainWindow(QtWidgets.QMainWindow):
             close=close,
             deleteFile=deleteFile,
             detectText=detectText,
+            detectAndRecognizeText=detectAndRecognizeText,
             toggleKeepPrevMode=toggle_keep_prev_mode,
             delete=delete,
             edit=edit,
@@ -698,6 +719,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 close,
                 deleteFile,
                 detectText,
+                detectAndRecognizeText,
                 None,
                 quit,
             ),
@@ -750,6 +772,7 @@ class MainWindow(QtWidgets.QMainWindow):
             save,
             deleteFile,
             detectText,
+            detectAndRecognizeText,
             None,
             createMode,
             editMode,
@@ -1900,6 +1923,51 @@ class MainWindow(QtWidgets.QMainWindow):
 
             self.resetState()
 
+    def detectAndRecognizeText(self):
+        """
+        detection results sample
+         ```
+         detection_results
+        results[0]['result'][11]
+         {'box': [10, 89, 11, 67, 71, 68, 71, 90],
+         'box_score': 0.8364680266062158,
+         'text': 'and',
+         'text_score': 0.9960382183392843}
+         ```
+        """
+        if not self.filename:
+            pass
+        try:
+            detection_results = ocr_recognition.readtext(self.filename,
+                                                         print_result=True,
+                                                         imshow=False,
+                                                         details=True,
+                                                         merge=False,
+                                                         batch_mode=True)
+        except Exception as e:
+            print(e)
+            return
+
+        if not len(detection_results) > 0:
+            pass
+        shapes = []
+        for res in detection_results[0]['result']:
+            if res['box_score'] < 0.5:
+                continue
+            shape = Shape(
+                label=res['text'].upper(),
+                shape_type="polygon",
+                group_id=None,
+            )
+            res_text_box = res['box']
+            shape.addPoint(QtCore.QPointF(res_text_box[0], res_text_box[1]))
+            shape.addPoint(QtCore.QPointF(res_text_box[2], res_text_box[3]))
+            shape.addPoint(QtCore.QPointF(res_text_box[4], res_text_box[5]))
+            shape.addPoint(QtCore.QPointF(res_text_box[6], res_text_box[7]))
+            shape.close()
+            shapes.append(shape)
+        self.loadShapes(shapes)
+
     def detectText(self):
         if not self.filename:
             pass
@@ -1908,7 +1976,6 @@ class MainWindow(QtWidgets.QMainWindow):
                                imshow=False,
                                details=True,
                                merge=False,
-                               merge_xdist=100,
                                batch_mode=True)
         if not len(detection_results) > 0:
             pass
