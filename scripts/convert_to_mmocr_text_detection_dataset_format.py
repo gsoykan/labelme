@@ -113,8 +113,9 @@ if __name__ == '__main__':
     json_files = search_files(".json", raw_annotations_path)
     random.seed(10)
     random.shuffle(json_files)
-    train_json = json_files[:-10]
-    test_json = json_files[-10:]
+    test_size = 20
+    train_json = json_files[:-test_size]
+    test_json = json_files[-test_size:]
     delete_contents_of_folder(
         "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/test/imgs/test")
     delete_contents_of_folder(
