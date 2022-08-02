@@ -46,7 +46,7 @@ def read_or_get_image(img, read_rgb: bool = False):
     return img
 
 
-def create_instances_json(json_files, is_train: bool):
+def create_instances_json(json_files, is_train: bool, is_val: bool = False):
     json_data = {}
     json_data["images"] = []
     json_data["categories"] = [{"id": 1, "name": "text"}]
@@ -57,12 +57,16 @@ def create_instances_json(json_files, is_train: bool):
         img_path = os.path.join(img_folder, f"{img_alias}.jpg")
         cv_img = read_or_get_image(img_path)
         img_height, img_width, img_channels = cv_img.shape
-        img_id = int(img_alias)
+        img_id = img_alias
         f = open(json_file)
         raw_annotation_json = json.load(f)
         f.close()
         shapes = raw_annotation_json["shapes"]
-        file_dir = "train" if is_train else "test"
+        file_dir = "train"
+        if not is_train and is_val:
+            file_dir = "test"
+        elif not is_train and not is_val:
+            file_dir = "test"
         json_data["images"].append({
             "file_name": f"{file_dir}/{img_alias}.jpg",
             "height": img_height,
@@ -113,18 +117,27 @@ if __name__ == '__main__':
     json_files = search_files(".json", raw_annotations_path)
     random.seed(10)
     random.shuffle(json_files)
-    test_size = 20
-    train_json = json_files[:-test_size]
+    test_size = 50
+    val_size = 50
+    train_json = json_files[:-(test_size+val_size)]
+    val_json = json_files[-(test_size+val_size):-test_size]
     test_json = json_files[-test_size:]
     delete_contents_of_folder(
         "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/test/imgs/test")
     delete_contents_of_folder(
         "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/train/imgs/train")
+    delete_contents_of_folder(
+        "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/val/imgs/test")
     for t in test_json:
         head, tail = os.path.split(t)
         img_path = os.path.join(img_folder, tail.split(".")[0] + ".jpg")
         shutil.copy2(img_path,
                      "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/test/imgs/test")
+    for t in val_json:
+        head, tail = os.path.split(t)
+        img_path = os.path.join(img_folder, tail.split(".")[0] + ".jpg")
+        shutil.copy2(img_path,
+                     "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/val/imgs/test")
     for t in train_json:
         head, tail = os.path.split(t)
         img_path = os.path.join(img_folder, tail.split(".")[0] + ".jpg")
@@ -132,11 +145,16 @@ if __name__ == '__main__':
                      "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/train/imgs/train")
     train_json = create_instances_json(train_json, True)
     test_json = create_instances_json(test_json, False)
+    val_json = create_instances_json(val_json, False, True)
     with open('train_dataset.json', 'w') as outfile:
         json.dump(train_json, outfile)
     with open('test_dataset.json', 'w') as outfile:
         json.dump(test_json, outfile)
+    with open('val_dataset.json', 'w') as outfile:
+        json.dump(val_json, outfile)
     shutil.copy2('test_dataset.json',
                  "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/test/instances_test.json")
+    shutil.copy2('val_dataset.json',
+                 "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/val/instances_test.json")
     shutil.copy2('train_dataset.json',
                  "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/train/instances_train.json")
