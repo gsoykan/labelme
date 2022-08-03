@@ -34,23 +34,50 @@ from labelme.widgets import ZoomWidget
 
 from mmocr.utils.ocr import MMOCR
 
+"""
+new models
+"""
+
 use_text_recognition = True
-ocr_detector_checkpoint = '/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/dbnet_r50dcnv2_fpnc_1200e_icdar2015_custom_140_20_adam6/best_0_hmean-iou:hmean_epoch_3.pth'
-ocr_recognition_checkpoint = '/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/nrtr_r31_1by8_1by4_custom_89imgs_6ep/best_0_char_precision_epoch_3.pth'
-if use_text_recognition:
-    recog_config = '/home/gsoykan20/Desktop/self_development/mmocr/configs/textrecog/nrtr/nrtr_r31_1by8_1by4_academic.py'
-    ocr_recognition = MMOCR(det='DB_r50',
-                            det_config="/home/gsoykan20/Desktop/self_development/mmocr/configs/textdet/dbnet/dbnet_r50dcnv2_fpnc_1200e_icdar2015.py",
-                            det_ckpt=ocr_detector_checkpoint,
-                            recog='NRTR_1/8-1/4',
-                            recog_config=recog_config,
-                            recog_ckpt=ocr_recognition_checkpoint
-                            )
+use_best = True
+ocr_detector_checkpoint_old = '/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/dbnet_r50dcnv2_fpnc_1200e_icdar2015_custom_335_40/best_0_hmean-iou:hmean_epoch_5.pth'
+ocr_detector_config_old = "/home/gsoykan20/Desktop/self_development/mmocr/configs/textdet/dbnet/dbnet_r50dcnv2_fpnc_1200e_icdar2015.py"
+ocr_detector_config = "/home/gsoykan20/Desktop/self_development/mmocr/configs/textdet/dbnetpp/dbnetpp_r50dcnv2_fpnc_1200e_icdar2015_custom.py"
+ocr_detector_checkpoint = '/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/dbnetpp_912_50/best_0_hmean-iou hmean_epoch_5.pth'
+ocr_recognition_checkpoint_old = '/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/nrtr_834_50/best_0_1-N.E.D_epoch_3.pth'
+ocr_recognition_checkpoint = '/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/nrtr_773_50/best_0_char_precision_epoch_3.pth'
+
+if use_best:
+    if use_text_recognition:
+        ocr_recognition = MMOCR(det='FCE_CTW_DCNv2',  # 'DB_r50',
+                                det_config='/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/fce_best/fcenet_r50dcnv2_fpn_1500e_ctw1500_custom.py',
+                                det_ckpt='/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/fce_best/best_0_hmean-iou hmean_epoch_5.pth',
+                                recog='MASTER',
+                                recog_config='/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/master_best/master_custom_dataset.py',
+                                recog_ckpt='/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/master_best/best_0_1-N.E.D_epoch_4.pth'
+                                )
+    else:
+        ocr_detection = MMOCR(det='FCE_CTW_DCNv2',  # 'DB_r50',
+                              det_ckpt=ocr_detector_checkpoint,
+                              recog=None,
+                              det_config=ocr_detector_config)
 else:
-    ocr_detection = MMOCR(det='DB_r50',
-                          det_ckpt=ocr_detector_checkpoint,
-                          recog=None,
-                          det_config="/home/gsoykan20/Desktop/self_development/mmocr/configs/textdet/dbnet/dbnet_r50dcnv2_fpnc_1200e_icdar2015.py")
+    if use_text_recognition:
+        recog_config_old = '/home/gsoykan20/Desktop/self_development/mmocr/configs/textrecog/nrtr/nrtr_r31_1by8_1by4_academic.py'
+        recog_config = '/home/gsoykan20/Desktop/self_development/mmocr/configs/textrecog/master/master_custom_dataset.py'
+
+        ocr_recognition = MMOCR(det='DBPP_r50', #'DB_r50',
+                                det_config=ocr_detector_config,
+                                det_ckpt=ocr_detector_checkpoint,
+                                recog='NRTR_1/8-1/4',
+                                recog_config=recog_config_old,
+                                recog_ckpt=ocr_recognition_checkpoint_old
+                                )
+    else:
+        ocr_detection = MMOCR(det='DBPP_r50', #'DB_r50',
+                              det_ckpt=ocr_detector_checkpoint,
+                              recog=None,
+                              det_config=ocr_detector_config)
 # FIXME
 # - [medium] Set max zoom value to something big enough for FitWidth/Window
 
@@ -1957,7 +1984,7 @@ class MainWindow(QtWidgets.QMainWindow):
             pass
         shapes = []
         for res in detection_results[0]['result']:
-            if res['box_score'] < 0.5:
+            if res.get('box_score') and res['box_score'] < 0.5:
                 continue
             shape = Shape(
                 label=res['text'].upper(),
@@ -1965,10 +1992,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 group_id=None,
             )
             res_text_box = res['box']
-            shape.addPoint(QtCore.QPointF(res_text_box[0], res_text_box[1]))
-            shape.addPoint(QtCore.QPointF(res_text_box[2], res_text_box[3]))
-            shape.addPoint(QtCore.QPointF(res_text_box[4], res_text_box[5]))
-            shape.addPoint(QtCore.QPointF(res_text_box[6], res_text_box[7]))
+            for i in range(int(len(res_text_box) / 2)):
+                shape.addPoint(QtCore.QPointF(res_text_box[i*2], res_text_box[i*2+1]))
             shape.close()
             shapes.append(shape)
         self.loadShapes(shapes)
