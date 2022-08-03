@@ -20,6 +20,8 @@ dataset_train_label_txt_path = "/home/gsoykan20/Desktop/self_development/mmocr/t
 dataset_test_img_folder = "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/ocr_comics_speech_bubble_dataset/test/imgs"
 dataset_test_label_txt_path = "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/ocr_comics_speech_bubble_dataset/test/label.txt"
 
+dataset_val_img_folder = "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/ocr_comics_speech_bubble_dataset/val/imgs"
+dataset_val_label_txt_path = "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/ocr_comics_speech_bubble_dataset/val/label.txt"
 
 def delete_contents_of_folder(folder_path):
     files = glob.glob(f'{folder_path}/*')
@@ -72,7 +74,7 @@ def crop_img(img,
     return img
 
 
-def create_dataset(json_files, is_train):
+def create_dataset(json_files, is_train, is_val=False):
     dataset = []
     for json_file in json_files:
         img_alias = json_file.split("/")[-1].split(".")[0]
@@ -82,6 +84,8 @@ def create_dataset(json_files, is_train):
         raw_annotation_json = json.load(f)
         f.close()
         shapes = raw_annotation_json["shapes"]
+        if len(shapes) == 0:
+            continue
         for shape in shapes:
             points = shape["points"]
             text_annotation = shape["label"]
@@ -101,20 +105,35 @@ def create_dataset(json_files, is_train):
 
             img_alias_for_dataset = str(uuid.uuid4()) + ".jpg"
 
+            img_folder_to_save = None
+            if is_train:
+                img_folder_to_save = dataset_train_img_folder
+            elif is_val:
+                img_folder_to_save = dataset_val_img_folder
+            else:
+                img_folder_to_save = dataset_test_img_folder
+
             minx, miny, maxx, maxy = polygon.bounds
             crop_img(cv_img,
                      (minx, miny, maxx, maxy),
-                     os.path.join(dataset_train_img_folder if is_train else dataset_test_img_folder,
+                     os.path.join(img_folder_to_save,
                                   img_alias_for_dataset))
 
             dataset.append((img_alias_for_dataset, text_annotation))
     return dataset
 
 
-def save_dataset(dataset, is_train):
+def save_dataset(dataset, is_train, is_val=False):
     dataset = list(map(lambda x: " ".join(x) + "\n", dataset))
     dataset[-1] = dataset[-1][:-2]
-    with open(dataset_train_label_txt_path if is_train else dataset_test_label_txt_path, 'w') as f:
+    label_path = None
+    if is_train:
+        label_path = dataset_train_label_txt_path
+    elif is_val:
+        label_path = dataset_val_label_txt_path
+    else:
+        label_path = dataset_test_label_txt_path
+    with open(label_path, 'w') as f:
         f.writelines(dataset)
 
 
@@ -122,13 +141,20 @@ if __name__ == '__main__':
     json_files = search_files(".json", raw_annotations_path)
     random.seed(10)
     random.shuffle(json_files)
-    train_json = json_files[:-11]
-    test_json = json_files[-11:]
+    test_size = 50
+    val_size = 50
+    train_json = json_files[:-(test_size + val_size)]
+    val_json = json_files[-(test_size + val_size):-test_size]
+    test_json = json_files[-test_size:]
     delete_contents_of_folder(dataset_train_img_folder)
     delete_txt_content(dataset_train_label_txt_path)
     delete_contents_of_folder(dataset_test_img_folder)
     delete_txt_content(dataset_test_label_txt_path)
+    delete_contents_of_folder(dataset_val_img_folder)
+    delete_txt_content(dataset_val_label_txt_path)
     train_dataset = create_dataset(train_json, True)
     test_dataset = create_dataset(test_json, False)
+    val_dataset = create_dataset(val_json, False, is_val=True)
     save_dataset(train_dataset, True)
     save_dataset(test_dataset, False)
+    save_dataset(val_dataset, False, is_val=True)
