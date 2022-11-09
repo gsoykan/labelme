@@ -1,27 +1,26 @@
+import glob
 import json
 import os
-import glob
 import random
-from math import floor
+import uuid
 
 import cv2
 import numpy as np
-from shapely.geometry import Polygon, box
-import shutil
 from PIL import Image
-import uuid
+from shapely.geometry import Polygon, box
+from dotenv import load_dotenv
 
-img_folder = "/home/gsoykan20/Desktop/datasets/comics_speech_bubble_dataset/raw_images_with_recognition_jsons"
-raw_annotations_path = "/home/gsoykan20/Desktop/datasets/comics_speech_bubble_dataset/raw_images_with_recognition_jsons"
+load_dotenv()
 
-dataset_train_img_folder = "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/ocr_comics_speech_bubble_dataset/train/imgs"
-dataset_train_label_txt_path = "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/ocr_comics_speech_bubble_dataset/train/label.txt"
+img_folder = os.environ.get('text_recog_img_folder')
+raw_annotations_path = os.environ.get('text_recog_raw_annotations_path')
+dataset_train_img_folder = os.environ.get('text_recog_dataset_train_img_folder')
+dataset_train_label_txt_path = os.environ.get('text_recog_dataset_train_label_txt_path')
+dataset_test_img_folder = os.environ.get('text_recog_dataset_test_img_folder')
+dataset_test_label_txt_path = os.environ.get('text_recog_dataset_test_label_txt_path')
+dataset_val_img_folder = os.environ.get('text_recog_dataset_val_img_folder')
+dataset_val_label_txt_path = os.environ.get('text_recog_dataset_val_label_txt_path')
 
-dataset_test_img_folder = "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/ocr_comics_speech_bubble_dataset/test/imgs"
-dataset_test_label_txt_path = "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/ocr_comics_speech_bubble_dataset/test/label.txt"
-
-dataset_val_img_folder = "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/ocr_comics_speech_bubble_dataset/val/imgs"
-dataset_val_label_txt_path = "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/ocr_comics_speech_bubble_dataset/val/label.txt"
 
 def delete_contents_of_folder(folder_path):
     files = glob.glob(f'{folder_path}/*')
@@ -144,8 +143,6 @@ if __name__ == '__main__':
     test_size = 50
     val_size = 50
     train_json = json_files[:-(test_size + val_size)]
-    # for dataset size experiments
-    # train_json = json_files[:800]
     val_json = json_files[-(test_size + val_size):-test_size]
     test_json = json_files[-test_size:]
     delete_contents_of_folder(dataset_train_img_folder)

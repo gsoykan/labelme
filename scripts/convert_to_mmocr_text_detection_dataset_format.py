@@ -8,9 +8,9 @@ import cv2
 import numpy as np
 from shapely.geometry import Polygon, box
 import shutil
+from dotenv import load_dotenv
 
-img_folder = "/home/gsoykan20/Desktop/datasets/comics_speech_bubble_dataset/raw_images"
-raw_annotations_path = "/home/gsoykan20/Desktop/datasets/comics_speech_bubble_dataset/raw_images"
+load_dotenv()
 
 
 def delete_contents_of_folder(folder_path):
@@ -113,38 +113,39 @@ def create_instances_json(json_files, is_train: bool, is_val: bool = False):
 
 
 if __name__ == '__main__':
-    raw_annotations_path = "/home/gsoykan20/Desktop/datasets/comics_speech_bubble_dataset/raw_images"
+    raw_annotations_path = os.environ.get('text_detection_raw_annotations_path')
+    img_folder = os.environ.get('text_detection_img_folder')
+    text_det_test_dataset = os.environ.get('text_det_test_dataset')
+    text_det_train_dataset = os.environ.get('text_det_train_dataset')
+    text_det_val_dataset = os.environ.get('text_det_val_dataset')
+    text_det_test_dataset_label = os.environ.get('text_det_test_dataset_label')
+    text_det_train_dataset_label = os.environ.get('text_det_train_dataset_label')
+    text_det_val_dataset_label = os.environ.get('text_det_val_dataset_label')
     json_files = search_files(".json", raw_annotations_path)
     random.seed(10)
     random.shuffle(json_files)
     test_size = 50
     val_size = 50
-    train_json = json_files[:-(test_size+val_size)]
-    # for dataset size experiments
-    # train_json = json_files[:50]
-    val_json = json_files[-(test_size+val_size):-test_size]
+    train_json = json_files[:-(test_size + val_size)]
+    val_json = json_files[-(test_size + val_size):-test_size]
     test_json = json_files[-test_size:]
-    delete_contents_of_folder(
-        "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/test/imgs/test")
-    delete_contents_of_folder(
-        "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/train/imgs/train")
-    delete_contents_of_folder(
-        "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/val/imgs/test")
+    for dataset_location in [text_det_test_dataset, text_det_train_dataset, text_det_val_dataset]:
+        delete_contents_of_folder(dataset_location)
     for t in test_json:
         head, tail = os.path.split(t)
         img_path = os.path.join(img_folder, tail.split(".")[0] + ".jpg")
         shutil.copy2(img_path,
-                     "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/test/imgs/test")
+                     text_det_test_dataset)
     for t in val_json:
         head, tail = os.path.split(t)
         img_path = os.path.join(img_folder, tail.split(".")[0] + ".jpg")
         shutil.copy2(img_path,
-                     "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/val/imgs/test")
+                     text_det_val_dataset)
     for t in train_json:
         head, tail = os.path.split(t)
         img_path = os.path.join(img_folder, tail.split(".")[0] + ".jpg")
         shutil.copy2(img_path,
-                     "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/train/imgs/train")
+                     text_det_train_dataset)
     train_json = create_instances_json(train_json, True)
     test_json = create_instances_json(test_json, False)
     val_json = create_instances_json(val_json, False, True)
@@ -155,8 +156,8 @@ if __name__ == '__main__':
     with open('val_dataset.json', 'w') as outfile:
         json.dump(val_json, outfile)
     shutil.copy2('test_dataset.json',
-                 "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/test/instances_test.json")
+                 text_det_test_dataset_label)
     shutil.copy2('val_dataset.json',
-                 "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/val/instances_test.json")
+                 text_det_val_dataset_label)
     shutil.copy2('train_dataset.json',
-                 "/home/gsoykan20/Desktop/self_development/mmocr/tests/data/comics_speech_bubble_dataset/train/instances_train.json")
+                 text_det_train_dataset_label)
