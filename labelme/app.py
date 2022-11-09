@@ -38,8 +38,8 @@ from mmocr.utils.ocr import MMOCR
 new models
 """
 
-use_text_recognition = True
-use_best = True
+use_text_recognition = False
+use_best = False
 ocr_detector_checkpoint_old = '/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/dbnet_r50dcnv2_fpnc_1200e_icdar2015_custom_335_40/best_0_hmean-iou:hmean_epoch_5.pth'
 ocr_detector_config_old = "/home/gsoykan20/Desktop/self_development/mmocr/configs/textdet/dbnet/dbnet_r50dcnv2_fpnc_1200e_icdar2015.py"
 ocr_detector_config = "/home/gsoykan20/Desktop/self_development/mmocr/configs/textdet/dbnetpp/dbnetpp_r50dcnv2_fpnc_1200e_icdar2015_custom.py"

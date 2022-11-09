@@ -120,6 +120,8 @@ if __name__ == '__main__':
     test_size = 50
     val_size = 50
     train_json = json_files[:-(test_size+val_size)]
+    # for dataset size experiments
+    # train_json = json_files[:50]
     val_json = json_files[-(test_size+val_size):-test_size]
     test_json = json_files[-test_size:]
     delete_contents_of_folder(
