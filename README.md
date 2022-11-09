@@ -1,3 +1,46 @@
+# Text Detection and Text Recognition Updates on 'labelme'
+
+This annotation tool is used 
+to create text detection and text recognition datasets 
+of [Robust Comics Text Dataset: COMICS TEXT+ & OCR Pipeline for Comics](https://github.com/gsoykan/comics_text_plus) 
+
+Additional packages on labelme. 
+
+- [MMOCR](https://github.com/open-mmlab/mmocr) version 0.6.0
+- [shapely](https://pypi.org/project/shapely/)
+- [python-dotenv](https://pypi.org/project/python-dotenv/)
+
+ Detection Mode             |  Recognition Mode
+:-------------------------:|:-------------------------:
+![Detection Mode](examples/detection_mode.png) |  ![Recognition Mode](examples/recognition_mode.png)
+
+### Executing program
+
+- There are two modes of this program: Detection mode and recognition mode.
+You can switch between modes by updating the **use_text_recognition** environment variable
+in .env file. A sample **.env** file is provided with the repo.
+- In the .env file you should provide text detection and recognition model's and config's paths. 
+Pretrained models can be 
+downloaded from [Robust Comics Text Dataset: COMICS TEXT+ & OCR Pipeline for Comics](https://github.com/gsoykan/comics_text_plus) repository.
+- We also provide scripts for converting annotations into datasets. You should remember to set correct 
+file and folder paths via .env file.
+- **To use Detection Mode**: first click on **Open Dir** select your working directory. Then from the file
+list you can select the image(textbox) of you want to annotate and finally by clicking on the **Detect Text** button
+you can get predictions from the detection model. If you think you should update the predictions to correct 
+labels then you can simply use labelme's default features.
+- **To use Recognition Mode**: first click on **Open Dir** select your working directory. Then from the file
+list you can select the image(textbox) of you want to annotate and finally by clicking on the **Detect & Recognize Text** button
+you can get text area predictions from the detection model and their correspondent texts from the recognition model.
+If you think you should update the predictions to correct 
+labels then you can simply use labelme's default features.
+
+```
+python scripts/convert_to_mmocr_text_detection_dataset_format.py
+python scripts/convert_to_mmocr_text_recognition_dataset_format.py
+```
+
+---
+
 <h1 align="center">
   <img src="labelme/icons/icon.png"><br/>labelme
 </h1>
