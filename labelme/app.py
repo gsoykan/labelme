@@ -33,51 +33,33 @@ from labelme.widgets import UniqueLabelQListWidget
 from labelme.widgets import ZoomWidget
 
 from mmocr.utils.ocr import MMOCR
+from dotenv import load_dotenv
 
-"""
-new models
-"""
+load_dotenv()
 
-use_text_recognition = False
-use_best = False
-ocr_detector_checkpoint_old = '/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/dbnet_r50dcnv2_fpnc_1200e_icdar2015_custom_335_40/best_0_hmean-iou:hmean_epoch_5.pth'
-ocr_detector_config_old = "/home/gsoykan20/Desktop/self_development/mmocr/configs/textdet/dbnet/dbnet_r50dcnv2_fpnc_1200e_icdar2015.py"
-ocr_detector_config = "/home/gsoykan20/Desktop/self_development/mmocr/configs/textdet/dbnetpp/dbnetpp_r50dcnv2_fpnc_1200e_icdar2015_custom.py"
-ocr_detector_checkpoint = '/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/dbnetpp_912_50/best_0_hmean-iou hmean_epoch_5.pth'
-ocr_recognition_checkpoint_old = '/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/nrtr_834_50/best_0_1-N.E.D_epoch_3.pth'
-ocr_recognition_checkpoint = '/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/nrtr_773_50/best_0_char_precision_epoch_3.pth'
+use_text_recognition = os.environ.get('use_text_recognition') == 'True'
+det = os.environ.get('det')
+ocr_detector_config = os.environ.get('ocr_detector_config')
+ocr_detector_checkpoint = os.environ.get('ocr_detector_checkpoint')
+recog = os.environ.get('recog')
+ocr_recognition_config = os.environ.get('ocr_recognition_config')
+ocr_recognition_checkpoint = os.environ.get('ocr_recognition_checkpoint')
 
-if use_best:
-    if use_text_recognition:
-        ocr_recognition = MMOCR(det='FCE_CTW_DCNv2',  # 'DB_r50',
-                                det_config='/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/fce_best/fcenet_r50dcnv2_fpn_1500e_ctw1500_custom.py',
-                                det_ckpt='/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/fce_best/best_0_hmean-iou hmean_epoch_5.pth',
-                                recog='MASTER',
-                                recog_config='/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/master_best/master_custom_dataset.py',
-                                recog_ckpt='/home/gsoykan20/Desktop/self_development/mmocr/work_dirs/master_best/best_0_1-N.E.D_epoch_4.pth'
-                                )
-    else:
-        ocr_detection = MMOCR(det='FCE_CTW_DCNv2',  # 'DB_r50',
-                              det_ckpt=ocr_detector_checkpoint,
-                              recog=None,
-                              det_config=ocr_detector_config)
+if use_text_recognition:
+    ocr_recognition = MMOCR(det=det,
+                            det_config=ocr_detector_config,
+                            det_ckpt=ocr_detector_checkpoint,
+                            recog=recog,
+                            recog_config=ocr_recognition_config,
+                            recog_ckpt=ocr_recognition_checkpoint
+                            )
 else:
-    if use_text_recognition:
-        recog_config_old = '/home/gsoykan20/Desktop/self_development/mmocr/configs/textrecog/nrtr/nrtr_r31_1by8_1by4_academic.py'
-        recog_config = '/home/gsoykan20/Desktop/self_development/mmocr/configs/textrecog/master/master_custom_dataset.py'
+    ocr_detection = MMOCR(det=det,
+                          det_ckpt=ocr_detector_checkpoint,
+                          det_config=ocr_detector_config,
+                          recog=None,
+                          )
 
-        ocr_recognition = MMOCR(det='DBPP_r50', #'DB_r50',
-                                det_config=ocr_detector_config,
-                                det_ckpt=ocr_detector_checkpoint,
-                                recog='NRTR_1/8-1/4',
-                                recog_config=recog_config_old,
-                                recog_ckpt=ocr_recognition_checkpoint_old
-                                )
-    else:
-        ocr_detection = MMOCR(det='DBPP_r50', #'DB_r50',
-                              det_ckpt=ocr_detector_checkpoint,
-                              recog=None,
-                              det_config=ocr_detector_config)
 # FIXME
 # - [medium] Set max zoom value to something big enough for FitWidth/Window
 
@@ -89,16 +71,15 @@ LABEL_COLORMAP = imgviz.label_colormap()
 
 
 class MainWindow(QtWidgets.QMainWindow):
-
     FIT_WINDOW, FIT_WIDTH, MANUAL_ZOOM = 0, 1, 2
 
     def __init__(
-        self,
-        config=None,
-        filename=None,
-        output=None,
-        output_file=None,
-        output_dir=None,
+            self,
+            config=None,
+            filename=None,
+            output=None,
+            output_file=None,
+            output_dir=None,
     ):
         if output is not None:
             logger.warning(
@@ -1245,9 +1226,9 @@ class MainWindow(QtWidgets.QMainWindow):
             label_id += self._config["shift_auto_shape_color"]
             return LABEL_COLORMAP[label_id % len(LABEL_COLORMAP)]
         elif (
-            self._config["shape_color"] == "manual"
-            and self._config["label_colors"]
-            and label in self._config["label_colors"]
+                self._config["shape_color"] == "manual"
+                and self._config["label_colors"]
+                and label in self._config["label_colors"]
         ):
             return self._config["label_colors"][label]
         elif self._config["default_shape_color"]:
@@ -1541,7 +1522,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """Load the specified file, or the last opened file if None."""
         # changing fileListWidget loads file
         if filename in self.imageList and (
-            self.fileListWidget.currentRow() != self.imageList.index(filename)
+                self.fileListWidget.currentRow() != self.imageList.index(filename)
         ):
             self.fileListWidget.setCurrentRow(self.imageList.index(filename))
             self.fileListWidget.repaint()
@@ -1567,7 +1548,7 @@ class MainWindow(QtWidgets.QMainWindow):
             label_file_without_path = osp.basename(label_file)
             label_file = osp.join(self.output_dir, label_file_without_path)
         if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(
-            label_file
+                label_file
         ):
             try:
                 self.labelFile = LabelFile(label_file)
@@ -1672,9 +1653,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def resizeEvent(self, event):
         if (
-            self.canvas
-            and not self.image.isNull()
-            and self.zoomMode != self.MANUAL_ZOOM
+                self.canvas
+                and not self.image.isNull()
+                and self.zoomMode != self.MANUAL_ZOOM
         ):
             self.adjustScale()
         super(MainWindow, self).resizeEvent(event)
@@ -1753,7 +1734,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def openPrevImg(self, _value=False):
         keep_prev = self._config["keep_prev"]
         if QtWidgets.QApplication.keyboardModifiers() == (
-            Qt.ControlModifier | Qt.ShiftModifier
+                Qt.ControlModifier | Qt.ShiftModifier
         ):
             self._config["keep_prev"] = True
 
@@ -1777,7 +1758,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def openNextImg(self, _value=False, load=True):
         keep_prev = self._config["keep_prev"]
         if QtWidgets.QApplication.keyboardModifiers() == (
-            Qt.ControlModifier | Qt.ShiftModifier
+                Qt.ControlModifier | Qt.ShiftModifier
         ):
             self._config["keep_prev"] = True
 
@@ -1993,7 +1974,7 @@ class MainWindow(QtWidgets.QMainWindow):
             )
             res_text_box = res['box']
             for i in range(int(len(res_text_box) / 2)):
-                shape.addPoint(QtCore.QPointF(res_text_box[i*2], res_text_box[i*2+1]))
+                shape.addPoint(QtCore.QPointF(res_text_box[i * 2], res_text_box[i * 2 + 1]))
             shape.close()
             shapes.append(shape)
         self.loadShapes(shapes)
@@ -2002,11 +1983,11 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self.filename:
             pass
         detection_results = ocr_detection.readtext(self.filename,
-                               print_result=True,
-                               imshow=False,
-                               details=True,
-                               merge=False,
-                               batch_mode=True)
+                                                   print_result=True,
+                                                   imshow=False,
+                                                   details=True,
+                                                   merge=False,
+                                                   batch_mode=True)
         if not len(detection_results) > 0:
             pass
         shapes = []
@@ -2094,7 +2075,7 @@ class MainWindow(QtWidgets.QMainWindow):
             "proceed anyway?"
         ).format(len(self.canvas.selectedShapes))
         if yes == QtWidgets.QMessageBox.warning(
-            self, self.tr("Attention"), msg, yes | no, yes
+                self, self.tr("Attention"), msg, yes | no, yes
         ):
             self.remLabels(self.canvas.deleteSelected())
             self.setDirty()
@@ -2153,7 +2134,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.filename = None
         for file in imageFiles:
             if file in self.imageList or not file.lower().endswith(
-                tuple(extensions)
+                    tuple(extensions)
             ):
                 continue
             label_file = osp.splitext(file)[0] + ".json"
@@ -2163,7 +2144,7 @@ class MainWindow(QtWidgets.QMainWindow):
             item = QtWidgets.QListWidgetItem(file)
             item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
             if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(
-                label_file
+                    label_file
             ):
                 item.setCheckState(Qt.Checked)
             else:
@@ -2196,7 +2177,7 @@ class MainWindow(QtWidgets.QMainWindow):
             item = QtWidgets.QListWidgetItem(filename)
             item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
             if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(
-                label_file
+                    label_file
             ):
                 item.setCheckState(Qt.Checked)
             else:
